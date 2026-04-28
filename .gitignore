@@ -216,3 +216,19 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local working notes (plan, progress journal, critique output)
+notes/
+
+# Demo response cache (live API output, captured once for fallback)
+demo_cache/
+
+# Runtime SQLite database
+db/compound.db
+db/compound.db-journal
+
+# macOS
+.DS_Store
+
+# Claude Code local settings
+.claude/
