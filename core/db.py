@@ -14,8 +14,14 @@ SEED_PATH = _DB_DIR / "seed.sql"
 
 
 def get_connection(path: str) -> sqlite3.Connection:
-    """Open a SQLite connection with foreign keys on and Row factory set."""
-    conn = sqlite3.connect(path)
+    """Open a SQLite connection with foreign keys on and Row factory set.
+
+    check_same_thread is disabled so a single connection cached by
+    Streamlit's @st.cache_resource can be used across script-runner
+    threads. Compound is single-user; concurrent writes are not a
+    concern in this build.
+    """
+    conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
