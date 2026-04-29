@@ -1,4 +1,4 @@
-"""Anthropic-backed review of a submitted workflow.
+"""OpenAI-backed review of a submitted workflow.
 
 Returns a structured dict with score, summary, suggestions, and a
 recommendation. The recommendation is advisory only. Status only ever
@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from config.settings import ANTHROPIC_MODEL
+from config.settings import OPENAI_MODEL
 
 REVIEW_SYSTEM_PROMPT = (
     "You review proposed AI workflow templates for a small team library. "
@@ -27,14 +27,14 @@ REVIEW_SYSTEM_PROMPT = (
     '  "suggestions": ["<short string>", ...],\n'
     '  "recommendation": "approve" | "revise" | "reject"\n'
     "}\n\n"
-    "No prose outside the JSON. No markdown fences."
+    "No prose outside the JSON."
 )
 
 _VALID_RECOMMENDATIONS = {"approve", "revise", "reject"}
 
 
 def review_workflow(workflow: dict, client: Any) -> dict:
-    """Ask Claude to review a workflow. Returns a normalised dict.
+    """Ask the model to review a workflow. Returns a normalised dict.
 
     On JSON parse or schema validation failure, returns
     recommendation='revise' with parse_ok=False and the raw response
@@ -52,13 +52,16 @@ def review_workflow(workflow: dict, client: Any) -> dict:
         indent=2,
     )
 
-    response = client.messages.create(
-        model=ANTHROPIC_MODEL,
+    response = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": REVIEW_SYSTEM_PROMPT},
+            {"role": "user", "content": user_msg},
+        ],
         max_tokens=1024,
-        system=REVIEW_SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_msg}],
+        response_format={"type": "json_object"},
     )
-    raw = response.content[0].text
+    raw = response.choices[0].message.content or ""
 
     try:
         parsed = json.loads(raw)

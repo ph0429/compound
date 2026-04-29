@@ -15,6 +15,6 @@ load_dotenv()
 PROJECT_ROOT: Path = Path(__file__).resolve().parent.parent
 
 DB_PATH: str = os.environ.get("COMPOUND_DB_PATH", "db/compound.db")
-ANTHROPIC_API_KEY: str | None = os.environ.get("ANTHROPIC_API_KEY")
-ANTHROPIC_MODEL: str = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5")
+OPENAI_API_KEY: str | None = os.environ.get("OPENAI_API_KEY")
+OPENAI_MODEL: str = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 USE_CACHE: bool = os.environ.get("COMPOUND_USE_CACHE", "false").lower() == "true"

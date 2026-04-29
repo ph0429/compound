@@ -29,8 +29,8 @@ logged.
 - No silent writes. Status transitions and runs go through core/workflows.py
   and core/runs.py only.
 - Submissions are draft until approved. Fail closed on validator errors.
-- Anthropic key from ANTHROPIC_API_KEY only. Never log full keys.
-- Tests must never make live Anthropic calls. Use the mock_anthropic_client
+- LLM key from OPENAI_API_KEY only. Never log full keys.
+- Tests must never make live model calls. Use the mock_llm_client
   fixture from tests/conftest.py.
 - runs is append-only. Never UPDATE or DELETE rows in this table.
 

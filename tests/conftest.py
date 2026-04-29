@@ -1,4 +1,4 @@
-"""Shared test fixtures: seeded temp database, mocked Anthropic client."""
+"""Shared test fixtures: seeded temp database, mocked LLM client."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -23,12 +23,12 @@ def conn(tmp_path: Path) -> Iterator:
 
 
 @pytest.fixture
-def mock_anthropic_client() -> MagicMock:
-    """Stand-in for the Anthropic client.
+def mock_llm_client() -> MagicMock:
+    """Stand-in for the OpenAI client.
 
     Tests configure responses by setting
-    `client.messages.create.return_value` to a mock with a populated
-    `.content[0].text` and, where relevant, `.usage.input_tokens` and
-    `.usage.output_tokens`.
+    `client.chat.completions.create.return_value` to a mock with a
+    populated `.choices[0].message.content` and, where relevant,
+    `.usage.prompt_tokens` and `.usage.completion_tokens`.
     """
     return MagicMock()

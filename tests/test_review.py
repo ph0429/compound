@@ -1,4 +1,4 @@
-"""Tests for core.review with a mocked Anthropic client."""
+"""Tests for core.review with a mocked OpenAI client."""
 from __future__ import annotations
 
 import json
@@ -9,7 +9,8 @@ from core.review import review_workflow
 
 def _make_response(text: str) -> MagicMock:
     response = MagicMock()
-    response.content = [MagicMock(text=text)]
+    response.choices = [MagicMock()]
+    response.choices[0].message.content = text
     return response
 
 
@@ -25,7 +26,7 @@ def _sample_workflow() -> dict:
 
 
 def test_review_returns_parsed_dict_on_valid_json(
-    mock_anthropic_client: MagicMock,
+    mock_llm_client: MagicMock,
 ) -> None:
     valid = json.dumps(
         {
@@ -35,9 +36,9 @@ def test_review_returns_parsed_dict_on_valid_json(
             "recommendation": "approve",
         }
     )
-    mock_anthropic_client.messages.create.return_value = _make_response(valid)
+    mock_llm_client.chat.completions.create.return_value = _make_response(valid)
 
-    result = review_workflow(_sample_workflow(), mock_anthropic_client)
+    result = review_workflow(_sample_workflow(), mock_llm_client)
 
     assert result["parse_ok"] is True
     assert result["score"] == 85
@@ -46,13 +47,13 @@ def test_review_returns_parsed_dict_on_valid_json(
 
 
 def test_review_returns_revise_on_garbage_response(
-    mock_anthropic_client: MagicMock,
+    mock_llm_client: MagicMock,
 ) -> None:
-    mock_anthropic_client.messages.create.return_value = _make_response(
+    mock_llm_client.chat.completions.create.return_value = _make_response(
         "this is not json at all"
     )
 
-    result = review_workflow(_sample_workflow(), mock_anthropic_client)
+    result = review_workflow(_sample_workflow(), mock_llm_client)
 
     assert result["parse_ok"] is False
     assert result["recommendation"] == "revise"
@@ -60,7 +61,7 @@ def test_review_returns_revise_on_garbage_response(
 
 
 def test_review_returns_revise_when_score_is_wrong_type(
-    mock_anthropic_client: MagicMock,
+    mock_llm_client: MagicMock,
 ) -> None:
     invalid = json.dumps(
         {
@@ -70,9 +71,9 @@ def test_review_returns_revise_when_score_is_wrong_type(
             "recommendation": "approve",
         }
     )
-    mock_anthropic_client.messages.create.return_value = _make_response(invalid)
+    mock_llm_client.chat.completions.create.return_value = _make_response(invalid)
 
-    result = review_workflow(_sample_workflow(), mock_anthropic_client)
+    result = review_workflow(_sample_workflow(), mock_llm_client)
 
     assert result["parse_ok"] is False
     assert result["recommendation"] == "revise"

@@ -10,12 +10,13 @@ import json
 import sqlite3
 from typing import Any
 
-from config.settings import ANTHROPIC_MODEL
+from config.settings import OPENAI_MODEL
 
-# Indicative pricing per million tokens. Refresh from Anthropic's
-# published rates; the column is informational only.
-INPUT_COST_PER_M_EUR = 3.0
-OUTPUT_COST_PER_M_EUR = 15.0
+# Indicative pricing per million tokens for gpt-4o-mini. Refresh from
+# OpenAI's published rates if the default model changes; the column is
+# informational only.
+INPUT_COST_PER_M_EUR = 0.15
+OUTPUT_COST_PER_M_EUR = 0.60
 
 
 class WorkflowNotRunnable(Exception):
@@ -43,14 +44,14 @@ def run_workflow(
 
     rendered = _render_prompt(row["prompt"], inputs)
 
-    response = client.messages.create(
-        model=ANTHROPIC_MODEL,
-        max_tokens=2048,
+    response = client.chat.completions.create(
+        model=OPENAI_MODEL,
         messages=[{"role": "user", "content": rendered}],
+        max_tokens=2048,
     )
-    output = response.content[0].text
-    input_tokens = int(getattr(response.usage, "input_tokens", 0) or 0)
-    output_tokens = int(getattr(response.usage, "output_tokens", 0) or 0)
+    output = response.choices[0].message.content or ""
+    input_tokens = int(getattr(response.usage, "prompt_tokens", 0) or 0)
+    output_tokens = int(getattr(response.usage, "completion_tokens", 0) or 0)
     cost = _estimate_cost_eur(input_tokens, output_tokens)
 
     conn.execute(
@@ -63,7 +64,7 @@ def run_workflow(
             run_by,
             json.dumps(inputs),
             output,
-            ANTHROPIC_MODEL,
+            OPENAI_MODEL,
             input_tokens,
             output_tokens,
             cost,

@@ -10,9 +10,9 @@ import json
 import sqlite3
 
 import streamlit as st
-from anthropic import Anthropic
+from openai import OpenAI
 
-from config.settings import ANTHROPIC_API_KEY, DB_PATH
+from config.settings import DB_PATH, OPENAI_API_KEY
 from core import audit, copy, review, runs, workflows
 from core.db import get_connection, init_db
 
@@ -25,9 +25,9 @@ def get_conn() -> sqlite3.Connection:
 
 
 @st.cache_resource
-def get_client() -> Anthropic:
-    """Build a single Anthropic client for the app session."""
-    return Anthropic(api_key=ANTHROPIC_API_KEY)
+def get_client() -> OpenAI:
+    """Build a single OpenAI client for the app session."""
+    return OpenAI(api_key=OPENAI_API_KEY)
 
 
 def main() -> None:
@@ -59,7 +59,7 @@ def main() -> None:
         page_submit(conn, client)
 
 
-def page_library(conn: sqlite3.Connection, client: Anthropic) -> None:
+def page_library(conn: sqlite3.Connection, client: OpenAI) -> None:
     """Render the published-workflow library."""
     st.header(copy.HEADER_LIBRARY)
     st.caption(copy.TAKEAWAY)
@@ -94,7 +94,7 @@ def page_library(conn: sqlite3.Connection, client: Anthropic) -> None:
             _render_run_history(conn, wf["id"])
 
 
-def page_submit(conn: sqlite3.Connection, client: Anthropic) -> None:
+def page_submit(conn: sqlite3.Connection, client: OpenAI) -> None:
     """Render the submission form and the four-stage review pipeline."""
     st.header(copy.HEADER_SUBMIT)
     st.caption(copy.TAKEAWAY)
@@ -173,7 +173,7 @@ def _render_input_form(wf: dict) -> dict:
 
 def _handle_run(
     conn: sqlite3.Connection,
-    client: Anthropic,
+    client: OpenAI,
     wf: dict,
     inputs_values: dict,
 ) -> None:
@@ -216,7 +216,7 @@ def _render_run_history(conn: sqlite3.Connection, workflow_id: int) -> None:
 
 def _run_submit_pipeline(
     conn: sqlite3.Connection,
-    client: Anthropic,
+    client: OpenAI,
     *,
     title: str,
     prompt: str,
