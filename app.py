@@ -62,7 +62,7 @@ def main() -> None:
             0 if st.session_state["nav"] == copy.PAGE_LIBRARY else 1
         )
         choice = st.radio(
-            "Navigation",
+            copy.LABEL_NAV,
             [copy.PAGE_LIBRARY, copy.PAGE_SUBMIT],
             index=default_index,
             label_visibility="collapsed",
@@ -95,15 +95,19 @@ def page_library(conn: sqlite3.Connection, client: OpenAI) -> None:
     for wf in published:
         with st.expander(wf["title"]):
             tags = wf.get("tags") or "(none)"
-            st.caption(f"Owner: {wf['owner']}  ·  Tags: {tags}")
+            st.caption(
+                copy.CAPTION_METADATA_TEMPLATE.format(
+                    owner=wf["owner"], tags=tags
+                )
+            )
 
-            st.markdown("**Prompt template**")
+            st.markdown(f"**{copy.SECTION_INSTRUCTIONS}**")
             st.code(wf["prompt"], language="text")
 
-            st.markdown("**Success criterion**")
+            st.markdown(f"**{copy.SECTION_SUCCESS_CRITERION}**")
             st.write(wf["success_criterion"])
 
-            st.markdown("**Run this workflow**")
+            st.markdown(f"**{copy.SECTION_RUN_WORKFLOW}**")
             inputs_values = _render_input_form(wf)
 
             run_key = f"run_{wf['id']}"
@@ -197,10 +201,10 @@ def _handle_run(
     inputs_values: dict,
 ) -> None:
     if any(not v.strip() for v in inputs_values.values()):
-        st.warning("Please fill in every input before running.")
+        st.warning(copy.MESSAGE_INPUTS_REQUIRED)
         return
     try:
-        with st.spinner("Running..."):
+        with st.spinner(copy.MESSAGE_RUNNING):
             output = runs.run_workflow(
                 conn,
                 workflow_id=wf["id"],
@@ -214,19 +218,23 @@ def _handle_run(
     except Exception as exc:
         st.error(f"{copy.ERROR_RUN_FAILED}\n\n{exc}")
         return
-    st.success("Run complete.")
-    st.markdown("**Output**")
+    st.success(copy.MESSAGE_RUN_COMPLETE)
+    st.markdown(f"**{copy.SECTION_OUTPUT}**")
     st.write(output)
 
 
 def _render_run_history(conn: sqlite3.Connection, workflow_id: int) -> None:
-    st.markdown("**Recent runs**")
+    st.markdown(f"**{copy.SECTION_RECENT_RUNS}**")
     history = audit.runs_by_workflow(conn, workflow_id)
     if not history:
-        st.caption("No runs yet.")
+        st.caption(copy.HISTORY_EMPTY)
         return
     for record in history[:3]:
-        st.caption(f"{record['created_at']} by {record['run_by']}")
+        st.caption(
+            copy.RUN_RECORD_TEMPLATE.format(
+                when=record["created_at"], who=record["run_by"]
+            )
+        )
         snippet = record["output"]
         if len(snippet) > 400:
             snippet = snippet[:400] + "..."
@@ -298,7 +306,9 @@ def _render_review_panel(conn: sqlite3.Connection) -> None:
     recommendation = result.get("recommendation", "revise")
 
     st.divider()
-    st.markdown(f"### Review: {panel['title']}")
+    st.markdown(
+        f"### {copy.HEADER_REVIEW_TEMPLATE.format(title=panel['title'])}"
+    )
     label = copy.RECOMMENDATION_LABELS.get(recommendation, recommendation)
     if recommendation == "approve":
         st.success(label)
@@ -308,17 +318,17 @@ def _render_review_panel(conn: sqlite3.Connection) -> None:
         st.warning(label)
 
     if result.get("score") is not None:
-        st.metric("Score", result["score"])
+        st.metric(copy.LABEL_SCORE, result["score"])
     if result.get("summary"):
-        st.markdown("**Summary**")
+        st.markdown(f"**{copy.SECTION_SUMMARY}**")
         st.write(result["summary"])
     suggestions = result.get("suggestions") or []
     if suggestions:
-        st.markdown("**Suggestions**")
+        st.markdown(f"**{copy.SECTION_SUGGESTIONS}**")
         for item in suggestions:
             st.write(f"- {item}")
     if not result.get("parse_ok"):
-        with st.expander("Raw model response"):
+        with st.expander(copy.SECTION_RAW_RESPONSE):
             st.code(result.get("raw_response", ""))
 
     col_approve, col_reject = st.columns(2)
@@ -336,10 +346,10 @@ def _handle_decision(
     try:
         if decision == "approve":
             workflows.approve(conn, workflow_id, "demo")
-            st.success("Approved and published.")
+            st.success(copy.MESSAGE_APPROVED)
         else:
             workflows.reject(conn, workflow_id, "")
-            st.warning("Rejected.")
+            st.warning(copy.MESSAGE_REJECTED)
     except workflows.IllegalTransition as exc:
         st.error(str(exc))
         return
