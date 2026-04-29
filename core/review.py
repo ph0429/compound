@@ -58,7 +58,7 @@ def review_workflow(workflow: dict, client: Any) -> dict:
             {"role": "system", "content": REVIEW_SYSTEM_PROMPT},
             {"role": "user", "content": user_msg},
         ],
-        max_tokens=1024,
+        max_completion_tokens=1024,
         response_format={"type": "json_object"},
     )
     raw = response.choices[0].message.content or ""

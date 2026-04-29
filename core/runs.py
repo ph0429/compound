@@ -47,7 +47,7 @@ def run_workflow(
     response = client.chat.completions.create(
         model=OPENAI_MODEL,
         messages=[{"role": "user", "content": rendered}],
-        max_tokens=2048,
+        max_completion_tokens=2048,
     )
     output = response.choices[0].message.content or ""
     input_tokens = int(getattr(response.usage, "prompt_tokens", 0) or 0)
