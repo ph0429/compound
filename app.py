@@ -7,14 +7,33 @@ rendering, capturing user input, and wiring the two together.
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 
 import streamlit as st
-from openai import OpenAI
 
-from config.settings import DB_PATH, OPENAI_API_KEY
-from core import audit, copy, review, runs, workflows
-from core.db import get_connection, init_db
+# Bridge Streamlit Cloud secrets into the environment so the rest of
+# the codebase reads its config via os.environ regardless of whether
+# we are running locally with a .env file or hosted on Streamlit
+# Community Cloud. setdefault preserves any value already set in the
+# shell or by python-dotenv.
+try:
+    for _secret_key in (
+        "OPENAI_API_KEY",
+        "OPENAI_MODEL",
+        "COMPOUND_DB_PATH",
+        "COMPOUND_USE_CACHE",
+    ):
+        if _secret_key in st.secrets:
+            os.environ.setdefault(_secret_key, str(st.secrets[_secret_key]))
+except Exception:
+    pass
+
+from openai import OpenAI  # noqa: E402
+
+from config.settings import DB_PATH, OPENAI_API_KEY  # noqa: E402
+from core import audit, copy, review, runs, workflows  # noqa: E402
+from core.db import get_connection, init_db  # noqa: E402
 
 
 @st.cache_resource
