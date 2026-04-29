@@ -12,11 +12,11 @@ from typing import Any
 
 from config.settings import OPENAI_MODEL
 
-# Indicative pricing per million tokens for gpt-4o-mini. Refresh from
-# OpenAI's published rates if the default model changes; the column is
-# informational only.
-INPUT_COST_PER_M_EUR = 0.15
-OUTPUT_COST_PER_M_EUR = 0.60
+# Indicative pricing per million tokens for gpt-5.4-mini, USD.
+# Source: https://developers.openai.com/api/docs/models/gpt-5.4-mini
+# The column is informational only; refresh if the default model changes.
+INPUT_COST_PER_M_USD = 0.75
+OUTPUT_COST_PER_M_USD = 4.50
 
 
 class WorkflowNotRunnable(Exception):
@@ -52,12 +52,12 @@ def run_workflow(
     output = response.choices[0].message.content or ""
     input_tokens = int(getattr(response.usage, "prompt_tokens", 0) or 0)
     output_tokens = int(getattr(response.usage, "completion_tokens", 0) or 0)
-    cost = _estimate_cost_eur(input_tokens, output_tokens)
+    cost = _estimate_cost_usd(input_tokens, output_tokens)
 
     conn.execute(
         "INSERT INTO runs "
         "(workflow_id, run_by, inputs_json, output, model, "
-        " input_tokens, output_tokens, cost_estimate_eur) "
+        " input_tokens, output_tokens, cost_estimate_usd) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         (
             workflow_id,
@@ -78,7 +78,7 @@ def _render_prompt(template: str, inputs: dict) -> str:
     return template.format(**inputs)
 
 
-def _estimate_cost_eur(input_tokens: int, output_tokens: int) -> float:
-    return (input_tokens / 1_000_000) * INPUT_COST_PER_M_EUR + (
+def _estimate_cost_usd(input_tokens: int, output_tokens: int) -> float:
+    return (input_tokens / 1_000_000) * INPUT_COST_PER_M_USD + (
         output_tokens / 1_000_000
-    ) * OUTPUT_COST_PER_M_EUR
+    ) * OUTPUT_COST_PER_M_USD

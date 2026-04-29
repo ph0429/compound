@@ -32,7 +32,7 @@ CREATE TABLE runs (
   model TEXT NOT NULL,
   input_tokens INTEGER,
   output_tokens INTEGER,
-  cost_estimate_eur REAL,
+  cost_estimate_usd REAL,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

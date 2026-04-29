@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from config.settings import OPENAI_MODEL
 from core.runs import WorkflowNotRunnable, run_workflow
 
 
@@ -48,11 +49,11 @@ def test_run_published_workflow_records_full_row(
     assert row is not None
     assert row["run_by"] == "alice"
     assert row["output"] == "Outline for Acme Ltd."
-    assert row["model"] == "gpt-4o-mini"
+    assert row["model"] == OPENAI_MODEL
     assert row["input_tokens"] == 100
     assert row["output_tokens"] == 200
-    assert row["cost_estimate_eur"] is not None
-    assert row["cost_estimate_eur"] > 0
+    assert row["cost_estimate_usd"] is not None
+    assert row["cost_estimate_usd"] > 0
 
 
 def test_run_unpublished_workflow_raises_and_inserts_no_row(
