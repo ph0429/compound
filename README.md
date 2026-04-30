@@ -2,63 +2,48 @@
 
 A small library is the difference between a team that uses AI and a team that compounds it.
 
-Compound is a shared AI workflow library. Anyone in a small team can publish, browse, and run a vetted AI workflow. New submissions go through a light review queue: deterministic checks, then a model review, then a human approval. Every run is recorded with prompt, output, model, token counts, and a cost estimate.
+Compound is a shared workflow library. New submissions go through automatic checks, then an AI review, then a human approval. Every run is recorded.
 
-Live demo: https://compound-demo.streamlit.app/
+**Live demo:** https://compound-demo.streamlit.app/
+**Repo:** https://github.com/ph0429/compound
 
-## The problem this answers
+## What it does
 
-Individual AI use is strong but not compounding. Each person has their own prompts; nothing is vetted, shared, or reusable. The bottleneck is not the model. It is the missing layer that turns one person's good workflow into something the rest of the team can run tomorrow.
+MultiBase's brief named scattered, inconsistent AI usage as a friction point and a digital workforce as the destination. Compound is the smallest piece of foundation that has to exist before either is real: a place to store, review, and reuse the prompts that actually work, with a record kept every time someone runs one.
 
-## How AI was used in this build
+A user opens the app, browses two preloaded workflows (Proposal Outline, Meeting Recap), submits a new one, watches it pass automatic checks, then an AI review, then human approval, then runs the approved workflow against their own inputs.
 
-The Streamlit app, the data layer, the tests, and the UI were written with Claude Code, with operator review on every commit before it landed. The commit history on the main branch is the audit trail of that pairing.
-
-The in-product review and run steps call OpenAI's gpt-5.4-mini through the standard chat completions API. JSON mode constrains the review output to a fixed schema. Tests mock the LLM client so the suite is predictable and uses no live credit.
-
-## How to run it locally
+## How to run it
 
 ```
+git clone https://github.com/ph0429/compound
+cd compound
 pip install -r requirements.txt
 cp .env.example .env   # add your OPENAI_API_KEY
 python scripts/reset_db.py
 streamlit run app.py
-pytest tests/
 ```
 
-## Architecture
+Or open the live demo: https://compound-demo.streamlit.app/
 
-- `core/` holds the pure-Python logic. No Streamlit imports.
-- `app.py` is the UI, and the only place Streamlit lives.
-- `db/` holds the schema, the seed, and the runtime SQLite file.
-
-## The control model
-
-- Deterministic checks run first: required fields, prompt length, and obvious secret-pattern detection.
-- The model returns a structured review (score, summary, suggestions, recommendation) constrained by JSON mode. The recommendation is advisory.
-- The human is the last gate. Status only changes on human action. The `runs` table is append-only by SQL trigger; the `reviews` table records every attempt including parse failures.
+Tests: `pytest tests/` runs 22 passing.
 
 ## Key decisions
 
-SQLite ships with the repo for zero-config and seeds two workflows on first run. The `runs` table is append-only by SQL trigger, not by convention. All user-facing strings live in `core/copy.py`, which makes voice reviewable in one place. The submit pipeline shows a four-stage status line so the user is never staring at silence during the model call.
+**The control model.** Automatic checks run first: required fields, prompt length, anything that looks like a password or email pasted in by accident. If the basic shape is wrong, the AI is not asked anything; the system refuses to continue. The AI then returns a review with four parts: a score out of one hundred, a one or two sentence summary, a list of suggestions, and a recommendation. The recommendation is just a suggestion; only a human can approve, revise, or reject. The history of runs can only be added to; past runs cannot be edited or deleted. Every review attempt is recorded, including ones the AI returned in the wrong format.
 
-Two trade-offs are accepted and worth naming. First, the deterministic checks catch missing fields and accidental secret leakage. They do not catch prompt-injection attempts. The threat model is a trusted small team, not the open internet; the model reviewer plus the human approver are the two layers that matter for adversarial inputs in this build. A stronger deterministic layer is named under what comes next. Second, the empty-state UI is unreachable on the seeded demo path. It exists for fresh installs and clean first-run behaviour. The seeded demo opens with two preloaded workflows on purpose.
+**The stack.** A small built-in database (SQLite) ships with the project, preloaded with two workflows on first run. The interface is built on Streamlit and hosted on Streamlit Community Cloud. OpenAI's gpt-5.4-mini powers the review and run steps. Every word the user sees lives in one file (`core/copy.py`); a test fails the build if anyone introduces an exclamation mark or any kind of dash, so the voice stays consistent.
 
-The build plan locked Anthropic Claude as the LLM. The deployed instance uses OpenAI's gpt-5.4-mini at the operator's direction. The interface in `core/review.py` and `core/runs.py` made the swap a single commit; the rest of the architecture did not need to change.
+**How AI was used in this build.** The app, the data layer, the tests, and the interface were written with Claude Code, with my review on every change before it landed. The change history on the main branch is the audit trail of that pairing. An example of judgement during the build: the table of runs originally had a column for cost in euros, defined when the AI was still planned as Anthropic. When OpenAI's gpt-5.4-mini prices came back in dollars, I renamed the column to dollars rather than apply an exchange rate to numbers I could not actually justify. Storing values you cannot stand behind is worse than picking a less-friendly unit. Tests use a stand-in for the AI, so the test suite costs nothing to run.
 
-## What was deliberately excluded, and what comes next
+**Two compromises accepted.** The automatic checks catch missing fields and obvious secrets pasted in by accident. They do not catch attempts to trick the AI itself. The audience for this is a trusted small team, not the open internet; the AI review and the human approver cover that risk in this version. The empty-library message exists for fresh installs but is never seen during the demo, because the project always preloads two workflows. Both are deliberate choices, not gaps.
 
-1. A stronger deterministic layer with explicit prompt-injection patterns and a shared secret-pattern library.
-2. Authentication and per-user audit, including a reviewer column on `workflows` so approvals are attributable.
-3. Slack notifications when a workflow lands in review and again when it is approved.
-4. A demo response cache behind `COMPOUND_USE_CACHE=true`, for offline recordings and CI.
-5. Supabase as the production database, keeping the same SQL surface.
-6. Vector search across prompt and success-criterion fields.
-7. A Notion or Slack import path for existing team prompts.
-8. Bump `actions/checkout` and `actions/setup-python` to their Node 24 lines before September 2026.
+## What I would add next
 
-## Troubleshooting
-
-- If the Streamlit Cloud URL is slow on first load, refresh once. The free tier sleeps after inactivity.
-- The Streamlit Cloud filesystem is ephemeral. Anything submitted on the public URL is reset on the next redeploy; the seeded workflows reload on cold start.
-- Locally, if `pytest` fails on imports, run `pip install -r requirements.txt` against your active virtual environment.
+1. Stronger automatic checks: patterns that catch attempts to trick the AI, and a shared list of things that look like secrets.
+2. Sign-in, so approvals are recorded against a real person.
+3. Slack notifications when a workflow lands in review and again when approved.
+4. A saved-response mode, so the demo can run offline and the test suite stays predictable.
+5. Supabase as the proper database for production.
+6. Smart search by meaning across prompts and standards (vector search).
+7. A way to import existing team prompts from Notion or Slack.
