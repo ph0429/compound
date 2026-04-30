@@ -6,6 +6,7 @@ Compound is a shared workflow library. New submissions go through automatic chec
 
 **Live demo:** https://compound-demo.streamlit.app/
 **Repo:** https://github.com/ph0429/compound
+**Loom (5 minutes):** https://www.loom.com/share/f35a2ef193824dc1969173c0d194136f
 
 ## What it does
 
