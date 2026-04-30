@@ -75,4 +75,4 @@ HISTORY_EMPTY = "No runs yet."
 
 CAPTION_METADATA_TEMPLATE = "Owner: {owner}  ·  Tags: {tags}"
 HEADER_REVIEW_TEMPLATE = "Review: {title}"
-RUN_RECORD_TEMPLATE = "{when} by {who}"
+RUN_RECORD_TEMPLATE = "{when}  ·  {who}  ·  {model}  ·  {cost}"

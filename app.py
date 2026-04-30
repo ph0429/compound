@@ -230,9 +230,13 @@ def _render_run_history(conn: sqlite3.Connection, workflow_id: int) -> None:
         st.caption(copy.HISTORY_EMPTY)
         return
     for record in history[:3]:
+        cost_value = record["cost_estimate_usd"] or 0.0
         st.caption(
             copy.RUN_RECORD_TEMPLATE.format(
-                when=record["created_at"], who=record["run_by"]
+                when=record["created_at"],
+                who=record["run_by"],
+                model=record["model"],
+                cost=f"${cost_value:.4f}",
             )
         )
         snippet = record["output"]
