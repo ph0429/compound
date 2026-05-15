@@ -10,7 +10,7 @@ Compound is a shared workflow library. New submissions go through automatic chec
 
 ## What it does
 
-MultiBase's brief named scattered, inconsistent AI usage as a friction point and a digital workforce as the destination. Compound is the smallest piece of foundation that has to exist before either is real: a place to store, review, and reuse the prompts that actually work, with a record kept every time someone runs one.
+The brief named scattered, inconsistent AI usage as a friction point and a digital workforce as the destination. Compound is the smallest piece of foundation that has to exist before either is real: a place to store, review, and reuse the prompts that actually work, with a record kept every time someone runs one.
 
 A user opens the app, browses two preloaded workflows (Proposal Outline, Meeting Recap), submits a new one, watches it pass automatic checks, then an AI review, then human approval, then runs the approved workflow against their own inputs.
 
